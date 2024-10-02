@@ -1,1 +1,58 @@
-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-deployment
+  labels:
+    app: my-app
+spec:
+  replicas: 2  # Number of Pods
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-tomcat-app
+        image: ecr/mytomcatapp:latest  # Docker image for your app
+        ports:
+        - containerPort: 8080
+        env:
+        - name: LOG_LEVEL  # Example environment variable from ConfigMap
+          valueFrom:
+            configMapKeyRef:
+              name: my-configmap
+              key: log_level
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/local/tomcat/conf  # Example if you have Tomcat configs
+          subPath: application.properties
+      volumes:
+      - name: config-volume
+        configMap:
+          name: my-configmap
+        volumeMounts:
+        - name: config-volume2
+          mountPath: /usr/local/tomcat/conf  # Example if you have Tomcat configs
+          subPath: application.properties2
+      volumes:
+      - name: config-volume2
+        configMap:
+          name: my-configmap2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+  labels:
+    app: my-app
+spec:
+  selector:
+    app: my-app
+  ports:
+  - protocol: TCP
+    port: 80  # External port to expose
+    targetPort: 8080  # The port your container is running on
+  type: LoadBalancer  # Exposes the service with a public IP (for cloud environments)
