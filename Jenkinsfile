@@ -40,6 +40,15 @@ pipeline {
                 sh 'docker run -d --name mytomcatapp -p 8080:8080 $DOCKER_IMAGE'
             }
         }
+
+        stage('Deploy manifesty') {
+            steps {
+                echo 'Running SonarQube scan...'
+                withSonarQubeEnv(SONARQUBE_SERVER) {
+                    sh 'kubectly ap[ply -f path/'
+                }
+            }
+        }
     }
 
     post {
